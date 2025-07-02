@@ -534,28 +534,68 @@ z3_alloc(S) :- z3_alloc_bytes(N), readable_bytes(N,S).
 % :- end_tests(remove_declarations).
 
 
-:- begin_tests(z3_swi_foreign_arrays).
+:- begin_tests(array_extended_tests).
 
-test(array_select_store, [setup(z3_new_handle(H)), cleanup(z3_free_handle(H))] ) :-
+% Test that store followed by select at the same index returns the stored value
+test(array_select_store, [setup(z3_new_handle(H)), cleanup(z3_free_handle(H))]) :-
     z3_assert(H, a:(array(int, int)) = store(default:(array(int,int)), x:int, 42)),
     z3_assert(H, y:int = select(a, x)),
     z3_check(H, l_true),
     z3_model_lists(H, Model),
-    C = Model.constants,
-    memberchk(y=42, C).
+    memberchk(y=42, Model.constants).
 
-test(array_inequality, [setup(z3_new_handle(H)), cleanup(z3_free_handle(H))] ) :-
+% Test that storing different values at same index produces inequality
+test(array_inequality, [setup(z3_new_handle(H)), cleanup(z3_free_handle(H))]) :-
     z3_assert(H, a:(array(int,int)) = store(default:(array(int,int)), 0, 1)),
     z3_assert(H, b:(array(int,int)) = store(default:(array(int,int)), 0, 2)),
     z3_assert(H, a = b),
     z3_check(H, l_false).
 
-test(array_default_read, [setup(z3_new_handle(H)), cleanup(z3_free_handle(H))] ) :-
+% Test that reading from a default array returns 0
+test(array_default_read, [setup(z3_new_handle(H)), cleanup(z3_free_handle(H))]) :-
     z3_assert(H, a:(array(int,int)) = default:(array(int,int))),
     z3_assert(H, select(a, 100) = 0),
     z3_check(H, l_true).
 
-:- end_tests(z3_swi_foreign_arrays).
 
+% Test that a later store at the same index shadows previous one
+test(array_store_shadowing, [setup(z3_new_handle(H)), cleanup(z3_free_handle(H))]) :-
+    z3_assert(H, a:(array(int,int)) = store(store(default:(array(int,int)), 5, 1), 5, 2)),
+    z3_assert(H, v:int = select(a, 5)),
+    z3_check(H, l_true),
+    z3_model_lists(H, Model),
+    memberchk(v=2, Model.constants).
+
+% Test that two values can be stored at different indices
+test(array_multiple_stores, [setup(z3_new_handle(H)), cleanup(z3_free_handle(H))]) :-
+    z3_assert(H, a:(array(int,int)) = store(store(default:(array(int,int)), 5, 99), 10, 42)),
+    z3_assert(H, x:int = select(a, 5)),
+    z3_assert(H, y:int = select(a, 10)),
+    z3_check(H, l_true),
+    z3_model_lists(H, Model),
+    memberchk(x=99, Model.constants),
+    memberchk(y=42, Model.constants).
+
+% Test that selecting an index different from the one written returns default (0)
+test(array_select_other_index, [setup(z3_new_handle(H)), cleanup(z3_free_handle(H))]) :-
+    z3_assert(H, a:(array(int,int)) = store(default:(array(int,int)), 3, 10)),
+    z3_assert(H, x:int = select(a, 4)),
+    z3_assert(H, x = 0),
+    z3_check(H, l_true).
+
+% Test that two arrays with same store operations are equal
+test(array_equality_same_store, [setup(z3_new_handle(H)), cleanup(z3_free_handle(H))]) :-
+    z3_assert(H, a:(array(int,int)) = store(default:(array(int,int)), 1, 5)),
+    z3_assert(H, b:(array(int,int)) = store(default:(array(int,int)), 1, 5)),
+    z3_assert(H, a = b),
+    z3_check(H, l_true).
+
+% Test that selecting a wrong value from store leads to contradiction
+test(array_wrong_select, [setup(z3_new_handle(H)), cleanup(z3_free_handle(H))]) :-
+    z3_assert(H, a:(array(int,int)) = store(default:(array(int,int)), 0, 1)),
+    z3_assert(H, select(a, 0) = 42),
+    z3_check(H, l_false).
+
+:- end_tests(array_extended_tests).
 
 
