@@ -535,6 +535,26 @@ bool z3_sort_to_term(Z3_context ctx, Z3_sort sort, term_t result) {
       return FALSE;
     }
     break;
+// trasforma (declare-const A (Array Int Bool)) in array(int, bool)
+  case Z3_ARRAY_SORT: {
+    Z3_sort domain_sort = Z3_get_array_sort_domain(ctx, sort);
+    Z3_sort range_sort  = Z3_get_array_sort_range(ctx, sort);
+
+    term_t domain_term = PL_new_term_ref();
+    term_t range_term  = PL_new_term_ref();
+    term_t args_term   = PL_new_term_refs(2);
+
+    if (!z3_sort_to_term(ctx, domain_sort, domain_term)) return FALSE;
+    if (!z3_sort_to_term(ctx, range_sort, range_term)) return FALSE;
+
+    PL_put_term(args_term, domain_term);
+    PL_put_term(args_term + 1, range_term);
+
+    functor_t f = PL_new_functor(PL_new_atom("array"), 2);
+    if (!PL_cons_functor_v(cons_term, f, args_term)) return FALSE;
+    break;
+  }
+
   default:
     {
       Z3_string sname_string = Z3_get_symbol_string(ctx, sname);
@@ -1489,6 +1509,28 @@ Z3_sort mk_sort(handle h, term_t expression) {
       return Z3_mk_bv_sort(ctx, width);
     }
 
+    
+        if (strcmp(name_string, "array") == 0) {
+      CHECK_ARITY(name_string, 2, arity);
+      term_t dom = PL_new_term_ref();
+      term_t ran = PL_new_term_ref();
+      PL_get_arg(1, expression, dom);
+      PL_get_arg(2, expression, ran);
+
+      Z3_sort domain_sort = mk_sort(h, dom);
+      Z3_sort range_sort  = mk_sort(h, ran);
+
+      if (!domain_sort || !range_sort) {
+        ERROR("mk_sort for array failed (null domain/range)\n");
+        return NULL;
+      }
+
+      DEBUG("Returning array sort from %s to %s\n",
+            Z3_sort_to_string(ctx, domain_sort),
+            Z3_sort_to_string(ctx, range_sort));
+      return Z3_mk_array_sort(ctx, domain_sort, range_sort);
+    }
+
 
   /*
     term_t a = PL_new_term_ref();
@@ -2095,6 +2137,16 @@ Z3_ast term_to_ast(const handle h, decl_map declaration_map, const term_t formul
       }
     }
 
+
+    // ********************************************* array  ************************************/
+    else if (strcmp(name_string, "select") == 0) {
+  CHECK_ARITY(name_string, 2, arity);
+  result = Z3_mk_select(ctx, subterms[0], subterms[1]);
+}
+else if (strcmp(name_string, "store") == 0) {
+  CHECK_ARITY(name_string, 3, arity);
+  result = Z3_mk_store(ctx, subterms[0], subterms[1], subterms[2]);
+}
 
 
     // ********************************************* bit vectors ************************************/

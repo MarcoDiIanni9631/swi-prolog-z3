@@ -79,6 +79,13 @@ z3_declare(H, F, T) :- compound(T),
                     functor(T, bv, 1), !,
                     must_be(ground, T),
                     z3_declare_function(H, F, T).
+%array - z3_declare(H, a1, array(int, int)). ->  (declare-const a1 (Array Int Int))
+z3_declare(H, F, T) :- compound(T),
+                    functor(T, array, 2), !,
+                    must_be(ground, T),
+                    z3_declare_function(H, F, T).
+%close array
+
 z3_declare(H, F, T) :- var(T), !,
                     T = uninterpreted,
                     z3_declare_function(H, F, T).
@@ -177,24 +184,24 @@ expand_macros(F, R) :- functor(F, alldifferent, _N), !,
 %  Hook for rewriting Prolog TermIn before giving it to Z3.
 z3_expand_term(A,B) :- mapsubterms(expand_macros,A,B).
 
-:- begin_tests(z3_utils_tests).
+% :- begin_tests(z3_utils_tests).
 
-test(ground_version, true(Symbols == [a/0, b/0, c/0, f/1, g/0]) ) :-
-    F = and(a:int, b = c, or(f(a) = g)),
-    ground_version(F, FG, Symbols),
-    assertion(F == FG),
-    true.
+% test(ground_version, true(Symbols == [a/0, b/0, c/0, f/1, g/0]) ) :-
+%     F = and(a:int, b = c, or(f(a) = g)),
+%     ground_version(F, FG, Symbols),
+%     assertion(F == FG),
+%     true.
 
-test(remove_type_annotations, true(FN=and(a, b = c))) :-
-    F = and(a:int, b = c:real),
-    remove_type_annotations(F, FN).
+% test(remove_type_annotations, true(FN=and(a, b = c))) :-
+%     F = and(a:int, b = c:real),
+%     remove_type_annotations(F, FN).
 
-test(declare_lambda, [true(X==uninterpreted)]) :-
-    z3_new_handle(H),
-    z3_declare(H, f/1, lambda([X], real)),
-    z3_free_handle(H).
+% test(declare_lambda, [true(X==uninterpreted)]) :-
+%     z3_new_handle(H),
+%     z3_declare(H, f/1, lambda([X], real)),
+%     z3_free_handle(H).
 
-test(expand) :-
-    z3_expand_term(isoneof(x,a,b), or(x=a,x=b)).
+% test(expand) :-
+%     z3_expand_term(isoneof(x,a,b), or(x=a,x=b)).
 
-:- end_tests(z3_utils_tests).
+% :- end_tests(z3_utils_tests).

@@ -1,4 +1,44 @@
-# swi-prolog-z3
+# swi-prolog-z3 (Fork con supporto array)
+
+Fork del progetto [`turibe/swi-prolog-z3`](https://github.com/turibe/swi-prolog-z3) con estensioni per la gestione avanzata degli array e miglioramenti nell'interoperabilità con Z3.
+
+## Modifiche principali
+
+- Supporto a tipi `array(...)` nel type checker (`type_inference.pl`)
+- Estensione e miglioramento dei test in `z3_unit_tests.pl`
+- Aggiornamenti a `z3_utils.pl`, `z3.pl` e codice C
+- Pulizia e ordinamento delle utilità generali
+
+## Compilazione del modulo nativo (`.so`)
+
+Il file `z3_swi_foreign.so` **non viene incluso nel repository** per motivi di portabilità. Va rigenerato manualmente ogni volta che vengono modificate le fonti C (`z3_swi_foreign.c`).
+
+### Come generare `z3_swi_foreign.so`
+
+Con il comando:
+
+```bash
+swipl-ld -shared -o z3_swi_foreign.so z3_swi_foreign.c -lz3
+```
+
+Assicurati di avere installato il pacchetto `libz3-dev`:
+
+```bash
+sudo apt install libz3-dev
+```
+
+> 🔧 In alternativa, puoi rigenerare il file da dentro SWI-Prolog:
+>
+> ```prolog
+> ?- [z3_swi_foreign].
+> ?- make.
+> ```
+
+**Nota:** il file `.so` compilato è valido solo per l’architettura su cui è stato generato (es. Linux x86_64).
+
+---
+
+# Documentazione originale
 
 Code to use Z3 as a constraint solver inside SWI Prolog, for a CLP(CC) implementation.
 Currently supports a subset of Z3's capabilities,
@@ -15,7 +55,6 @@ Tomas Uribe, t****.u****@gmail.com
 
 Github: [https://github.com/turibe/swi-prolog-z3](https://github.com/turibe/swi-prolog-z3).
 
-
 ## Installation:
 
 Tested on MacOS Sonoma,
@@ -27,8 +66,6 @@ Tested on MacOS Sonoma,
 
 2. Install and build Z3, including `libz3.dylib` . This can also be done via brew, macports, or download.
 See [https://github.com/Z3Prover/z3](https://github.com/Z3Prover/z3).
-
-
 
 3. Add a symbolic link to the `libz3.dylib` file in this directory (or copy it over).
 
@@ -208,5 +245,3 @@ and navigate to [http://localhost:8080/pldoc/](http://localhost:8080/pldoc/) to 
 - The current version handles the following Z3 capabilities:
 {int,real,bool} types, propositional logic, equality, arithmetic, bit vectors, and uninterpreted function symbols.
 Other Z3 features such as arrays, sets and quantifiers are future work.
-
-

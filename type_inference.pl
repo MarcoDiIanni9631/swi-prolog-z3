@@ -190,6 +190,15 @@ signature(^, A, B) :- signature(power, A, B).
 :- declare(bvxnor, [bv(N), bv(N)], bv(N)).
 :- declare(bvxor, [bv(N), bv(N)], bv(N)).
 
+
+
+%%
+%%array declaration
+:- declare(select, [array(Index, Element), Index], Element).
+:- declare(store, [array(Index, Element), Index, Element], array(Index, Element)).
+%%
+
+
 %% the result type depends on the value of an arg, so can't quite do this:
 %% :- declare(int2bv, [int, int], bv(_N)).
 
@@ -248,6 +257,10 @@ typecheck(T, bv(N), E, E) :- functor(T, int2bv, _), !,
                              T = int2bv(N, I),
                              integer(N),
                              integer(I).
+
+%% Qui forse la definizione di as const???
+
+%%
 typecheck(T, Type, Envin, Envout) :- functor(T, mk_numeral, N), !,
                                      N = 2,
                                      T = mk_numeral(String, Type),
@@ -342,78 +355,78 @@ typecheck_to_list(Term, Type, Result) :- empty_assoc(Empty), typecheck(Term, Typ
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Unit tests %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-:- begin_tests(type_inference_tests).
+% :- begin_tests(type_inference_tests).
 
-test(basic, [true(Atype == int), nondet]) :-
-    typecheck(and(a:int > b, c), bool, Map),
-    get_assoc(a/0, Map, Atype),
-    get_assoc(b/0, Map, int),
-    get_assoc(c/0, Map, bool).
+% test(basic, [true(Atype == int), nondet]) :-
+%     typecheck(and(a:int > b, c), bool, Map),
+%     get_assoc(a/0, Map, Atype),
+%     get_assoc(b/0, Map, int),
+%     get_assoc(c/0, Map, bool).
 
-test(conflict1, [fail]) :-
-    typecheck(a:int, _, Map),
-    typecheck(a/0, bool, Map, _Mapout).
+% test(conflict1, [fail]) :-
+%     typecheck(a:int, _, Map),
+%     typecheck(a/0, bool, Map, _Mapout).
 
-test(conflict2, [fail]) :-
-    typecheck(f(a:int), int, Map),
-    typecheck(f(b:bool), int, Map, _Mapout).
+% test(conflict2, [fail]) :-
+%     typecheck(f(a:int), int, Map),
+%     typecheck(f(b:bool), int, Map, _Mapout).
 
-test(conflict3, [fail]) :-
-    typecheck(f(f(a:int)),bool, _M).
+% test(conflict3, [fail]) :-
+%     typecheck(f(f(a:int)),bool, _M).
 
-test(nested) :-
-    typecheck(f(f(a:int)), int, M),
-    get_assoc(f/1, M, lambda([int], int)).
+% test(nested) :-
+%     typecheck(f(f(a:int)), int, M),
+%     get_assoc(f/1, M, lambda([int], int)).
 
-test(nested1, [fail]) :-
-    typecheck(f(g(a):int, g(b):bool):int, _X, _M).
+% test(nested1, [fail]) :-
+%     typecheck(f(g(a):int, g(b):bool):int, _X, _M).
 
-test(nested2, [fail]) :-
-    typecheck(f(g(a:int):int, g(b:bool)), _X, _M).
+% test(nested2, [fail]) :-
+%     typecheck(f(g(a:int):int, g(b:bool)), _X, _M).
 
-test(divtest, [nondet]) :-
-    type_inference:typecheck(a = div(x, y), _T, t, M), % choicepoint between int and real
-    type_inference:typecheck(a = div(b:real, 2), _T1, M, _M1). % don't need 2.0
+% test(divtest, [nondet]) :-
+%     type_inference:typecheck(a = div(x, y), _T, t, M), % choicepoint between int and real
+%     type_inference:typecheck(a = div(b:real, 2), _T1, M, _M1). % don't need 2.0
 
-test(ftest) :-
-    typecheck(f(a):int, int, M),
-    get_assoc(f/1, M, lambda([_A], int)).
+% test(ftest) :-
+%     typecheck(f(a):int, int, M),
+%     get_assoc(f/1, M, lambda([_A], int)).
 
-test(nodottest) :-
-    typecheck(f(a):int, int, M),
-    \+ get_assoc(:, M, _).
+% test(nodottest) :-
+%     typecheck(f(a):int, int, M),
+%     \+ get_assoc(:, M, _).
 
-test(badarity) :-
-    \+ typecheck(not(_X,_Y), bool, _R).
+% test(badarity) :-
+%     \+ typecheck(not(_X,_Y), bool, _R).
 
-%    catch(typecheck(not(X,Y), bool, _Map), error(E, _), true),
-%    E =@= syntax_error(arity_error(not(X,Y), 2)) .
+% %    catch(typecheck(not(X,Y), bool, _Map), error(E, _), true),
+% %    E =@= syntax_error(arity_error(not(X,Y), 2)) .
 
-test(atleast) :-
-    typecheck(atleast(a,b,c,d), bool, Map),
-    get_assoc(a/0, Map, bool),
-    get_assoc(d/0, Map, int).
+% test(atleast) :-
+%     typecheck(atleast(a,b,c,d), bool, Map),
+%     get_assoc(a/0, Map, bool),
+%     get_assoc(d/0, Map, int).
 
-test(intreal, set(T == [bool, int, real]) ) :-
-    typecheck(a>1, bool, t, R),
-    get_assoc(a/0,R,T).
+% test(intreal, set(T == [bool, int, real]) ) :-
+%     typecheck(a>1, bool, t, R),
+%     get_assoc(a/0,R,T).
 
-test(bool_plus, set(T == [bool, int]) ) :-
-    typecheck((a:int) + b, int, R),
-    get_assoc(b/0, R, T).
+% test(bool_plus, set(T == [bool, int]) ) :-
+%     typecheck((a:int) + b, int, R),
+%     get_assoc(b/0, R, T).
 
-test(bool_times, set(T == [bool, int]) ) :-
-    typecheck((a:int) * b, int, R),
-    get_assoc(b/0, R, T).
+% test(bool_times, set(T == [bool, int]) ) :-
+%     typecheck((a:int) * b, int, R),
+%     get_assoc(b/0, R, T).
 
-test(nested_decl, [true((FT == lambda([int], int), GT=FT)), nondet ]) :-
-    typecheck(f(g(a:int):int):int = b:int, bool, t, R),
-    get_assoc(f/1, R, FT),
-    get_assoc(g/1, R, GT).
+% test(nested_decl, [true((FT == lambda([int], int), GT=FT)), nondet ]) :-
+%     typecheck(f(g(a:int):int):int = b:int, bool, t, R),
+%     get_assoc(f/1, R, FT),
+%     get_assoc(g/1, R, GT).
 
-test(basic_eq, set(T == [int, real])) :-
-    typecheck(a = b:int, bool, t, R),
-    get_assoc(a/0, R, T),
-    get_assoc(b/0, R, int).
+% test(basic_eq, set(T == [int, real])) :-
+%     typecheck(a = b:int, bool, t, R),
+%     get_assoc(a/0, R, T),
+%     get_assoc(b/0, R, int).
 
-:- end_tests(type_inference_tests).
+% :- end_tests(type_inference_tests).

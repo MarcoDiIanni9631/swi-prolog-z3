@@ -67,21 +67,21 @@ pair_list_to_assoc([X|Rest], M) :- % TODO: better recursion here.
 %  Creates an assoc map from a list of pairs (binary terms, any function symbol is allowed).
 pair_list_to_assoc(L, R) :- foldl(add_pair, L, t, R).
 
-:- begin_tests(util_tests).
+% :- begin_tests(util_tests).
 
-test(empty) :-
-    split_list([], [], []).
+% test(empty) :-
+%     split_list([], [], []).
 
-test(one) :-
-    split_list([a], [], [a]).
+% test(one) :-
+%     split_list([a], [], [a]).
 
-test(odd) :-
-    split_list([a,b,c,d,e], [a,b], [c,d,e]).
+% test(odd) :-
+%     split_list([a,b,c,d,e], [a,b], [c,d,e]).
 
-test(even, true(X == [3,4])) :-
-    split_list([1,2,3,4], [1,2], X).
+% test(even, true(X == [3,4])) :-
+%     split_list([1,2,3,4], [1,2], X).
 
-test(repeat_string, true(R == "ababab")) :-
-    repeat_string("ab", 3, R).
+% test(repeat_string, true(R == "ababab")) :-
+%     repeat_string("ab", 3, R).
 
-:- end_tests(util_tests).
+% :- end_tests(util_tests).

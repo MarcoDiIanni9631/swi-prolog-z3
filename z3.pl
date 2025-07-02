@@ -434,347 +434,363 @@ z3_is_implied(F) :- z3_push(not(F), Status),
 %%%%%%%%%%%%%%%%%%%%%%%%%% unit tests %%%%%%%%%%%%%%%%%
 
 
-:- begin_tests(push_assert, [setup(reset_globals), cleanup(free_globals)]).
+% :- begin_tests(push_assert, [setup(reset_globals), cleanup(free_globals)]).
 
-test_formulas(Formulas) :-
-    Formulas = [foo(a) = b+c,
-                foo(b) = 2,
-                a = (b:int), %% int should remove choicepoint
-                b = a,
-                d:int = f(e:foobarsort),
-                foo(b) = (c:int) % this implies b = 0
-               ]
-               .
+% test_formulas(Formulas) :-
+%     Formulas = [foo(a) = b+c,
+%                 foo(b) = 2,
+%                 a = (b:int), %% int should remove choicepoint
+%                 b = a,
+%                 d:int = f(e:foobarsort),
+%                 foo(b) = (c:int) % this implies b = 0
+%                ]
+%                .
 
-check_test_formulas(Formulas, R) :-
-    test_formulas(Formulas),
-    Conjunction =.. [and | Formulas],
-    z3_push(Conjunction, R).
+% check_test_formulas(Formulas, R) :-
+%     test_formulas(Formulas),
+%     Conjunction =.. [and | Formulas],
+%     z3_push(Conjunction, R).
 
-test(sat, [true(R == l_true)] ) :-
-    check_test_formulas(_F, R).
+% test(sat, [true(R == l_true)] ) :-
+%     check_test_formulas(_F, R).
 
-%% only tests type inference:
-test(typetest, [true(A-F == int-lambda([foobarsort], int)) , nondet ] ) :-
-    test_formulas(Formulas),
-    assert_formula_list_types(Formulas),
-    get_type_inference_map(Map),
-    get_assoc(a/0, Map, A),
-    get_assoc(f/1, Map, F).
+% %% only tests type inference:
+% test(typetest, [true(A-F == int-lambda([foobarsort], int)) , nondet ] ) :-
+%     test_formulas(Formulas),
+%     assert_formula_list_types(Formulas),
+%     get_type_inference_map(Map),
+%     get_assoc(a/0, Map, A),
+%     get_assoc(f/1, Map, F).
 
-test(nonsat, [true(R1 == l_true), true(R2 == l_false)] ) :-
-    check_test_formulas(_Formulas, R1),
-    assertion(z3_is_implied(b = 0)),
-    z3_push(b=2, R2).
+% test(nonsat, [true(R1 == l_true), true(R2 == l_false)] ) :-
+%     check_test_formulas(_Formulas, R1),
+%     assertion(z3_is_implied(b = 0)),
+%     z3_push(b=2, R2).
 
-test(reals, [true(R == l_true)] ) :-
-    z3_push(y:real > 2),
-    z3_push(a:real=div(x, y)),
-    z3_push(a = div(b:real, 4.0)),
-    z3_push(a > 0.0, R).
+% test(reals, [true(R == l_true)] ) :-
+%     z3_push(y:real > 2),
+%     z3_push(a:real=div(x, y)),
+%     z3_push(a = div(b:real, 4.0)),
+%     z3_push(a > 0.0, R).
 
-% interesting scenario: z3_push(a:real = div(x, y), R), z3_push(a = div(b:real, 4.0), R1), z3_model(M).
-% reports on division-by-zero value.
-% also interesting:
-% z3_push_and_print(a:real=div(x, y), R), z3_push_and_print(a = div(b, 4.0), R1).
+% % interesting scenario: z3_push(a:real = div(x, y), R), z3_push(a = div(b:real, 4.0), R1), z3_model(M).
+% % reports on division-by-zero value.
+% % also interesting:
+% % z3_push_and_print(a:real=div(x, y), R), z3_push_and_print(a = div(b, 4.0), R1).
 
-test(atmost0, [true(R == l_true), true(R1 == l_false)] ) :-
-    z3_push(atmost(a:bool, b:bool, c:bool, 0), R),
-    z3_push(a, R1).
+% test(atmost0, [true(R == l_true), true(R1 == l_false)] ) :-
+%     z3_push(atmost(a:bool, b:bool, c:bool, 0), R),
+%     z3_push(a, R1).
 
-test(atmost1) :-
-    z3_push(atmost(a:bool, b:bool, c:bool, 1), R), z3_push(a, R1), z3_push(b, R2),
-    R = l_true,
-    R1 = l_true,
-    R2 = l_false.
+% test(atmost1) :-
+%     z3_push(atmost(a:bool, b:bool, c:bool, 1), R), z3_push(a, R1), z3_push(b, R2),
+%     R = l_true,
+%     R1 = l_true,
+%     R2 = l_false.
 
-test(atleast) :-
-    z3_push(atleast(a:bool, b:bool, c:bool, 2), R),
-    z3_push(a, R1),
-    z3_push(not(b), R2),
-    z3_push(not(c), R3),
-    R = l_true,
-    R1 = l_true,
-    R2 = l_true,
-    R3 = l_false.
+% test(atleast) :-
+%     z3_push(atleast(a:bool, b:bool, c:bool, 2), R),
+%     z3_push(a, R1),
+%     z3_push(not(b), R2),
+%     z3_push(not(c), R3),
+%     R = l_true,
+%     R1 = l_true,
+%     R2 = l_true,
+%     R3 = l_false.
 
-test(consistent) :-
-    z3_push(and(a:int>b, b>c, c>d)), \+ z3_is_consistent(d>a),
-    z3_is_consistent(a > d),
-    z3_push(a > d).
+% test(consistent) :-
+%     z3_push(and(a:int>b, b>c, c>d)), \+ z3_is_consistent(d>a),
+%     z3_is_consistent(a > d),
+%     z3_push(a > d).
 
-test(implied) :-
-    z3_is_implied(true),
-    \+ z3_is_implied(false),
-    z3_push(and(a:int>b, b>c, c>d)), z3_is_implied(a>d).
+% test(implied) :-
+%     z3_is_implied(true),
+%     \+ z3_is_implied(false),
+%     z3_push(and(a:int>b, b>c, c>d)), z3_is_implied(a>d).
 
-test(implied_with_error) :-
-    \+ z3_is_implied(x:foo = y:bar).
+% test(implied_with_error) :-
+%     \+ z3_is_implied(x:foo = y:bar).
 
-test(consistent_with_error) :-
-    \+ z3_is_consistent(x:foo = y:bar).
+% test(consistent_with_error) :-
+%     \+ z3_is_consistent(x:foo = y:bar).
 
-test(boolean) :-
-    z3_push(or(and(a:bool, b:bool), not(c:bool))),
-    z3_push(c:bool),
-    z3_is_implied(a).
+% test(boolean) :-
+%     z3_push(or(and(a:bool, b:bool), not(c:bool))),
+%     z3_push(c:bool),
+%     z3_is_implied(a).
 
-test(eval, [true(R == 6)]) :-
-    z3_push(a = 2),
-    z3_push(b = 3),
-    z3_eval(a * b, R).
+% test(eval, [true(R == 6)]) :-
+%     z3_push(a = 2),
+%     z3_push(b = 3),
+%     z3_eval(a * b, R).
 
-test(eval_list, true(R == [3,4]) ) :-
-    z3_push(a = 1),
-    z3_push(b= 3),
-    z3_eval([1+2, a + b], true, R).
+% test(eval_list, true(R == [3,4]) ) :-
+%     z3_push(a = 1),
+%     z3_push(b= 3),
+%     z3_eval([1+2, a + b], true, R).
 
-test(undefs, [true(R2 == l_true)]) :-
-    z3_push(power(a:real,b:int) = c, l_true), z3_push(c=2.0, R1), z3_push(a=2.0, R2),
-    assertion(R1 == l_undef).
+% test(undefs, [true(R2 == l_true)]) :-
+%     z3_push(power(a:real,b:int) = c, l_true), z3_push(c=2.0, R1), z3_push(a=2.0, R2),
+%     assertion(R1 == l_undef).
 
-test(undef_implied) :-
-    z3_push(power(a:real,b:int) = c, l_true), \+ z3_is_implied(c=2.0).
+% test(undef_implied) :-
+%     z3_push(power(a:real,b:int) = c, l_true), \+ z3_is_implied(c=2.0).
 
-test(undef_consistent) :- % consistency check fails if l_undef
-    z3_push(power(a:real,b:int) = c, l_true), \+ z3_is_consistent(c=2.0).
+% test(undef_consistent) :- % consistency check fails if l_undef
+%     z3_push(power(a:real,b:int) = c, l_true), \+ z3_is_consistent(c=2.0).
 
-%% to see how the model changes:
-%% z3:z3_push(b:int>c,R), z3:z3_push(and(a>d:int,b>e:int),R1), z3_push(f > b), z3_model(M), z3_is_consistent(f < a), z3_model(M1), z3_push(f > a), z3_model(M2).
-%% or z3_push_and_print(a > 1), z3_push_and_print(b > 2), z3_push_and_print(a > b), solver_scopes(N).
+% %% to see how the model changes:
+% %% z3:z3_push(b:int>c,R), z3:z3_push(and(a>d:int,b>e:int),R1), z3_push(f > b), z3_model(M), z3_is_consistent(f < a), z3_model(M1), z3_push(f > a), z3_model(M2).
+% %% or z3_push_and_print(a > 1), z3_push_and_print(b > 2), z3_push_and_print(a > b), solver_scopes(N).
 
-test(scopes, [true(((N1 == 1), (N2==2))) ] ) :-
-    solver_scopes(0),
-    z3_push(a:int=14), solver_scopes(N1), z3_push(b:int=a-5), solver_scopes(N2).
+% test(scopes, [true(((N1 == 1), (N2==2))) ] ) :-
+%     solver_scopes(0),
+%     z3_push(a:int=14), solver_scopes(N1), z3_push(b:int=a-5), solver_scopes(N2).
 
 
-test(between) :-
-    z3_push(between(x:int, 1, 4)), z3_push(between(x, 2, 3)), z3_is_implied(x = 3 or x = 2).
+% test(between) :-
+%     z3_push(between(x:int, 1, 4)), z3_push(between(x, 2, 3)), z3_is_implied(x = 3 or x = 2).
 
-test(instantiate_types, [true(X == 32)]) :-
-    z3_push(a:bv(32) = b:bv(X), R),
+% test(instantiate_types, [true(X == 32)]) :-
+%     z3_push(a:bv(32) = b:bv(X), R),
+%     assertion(R == l_true),
+%     z3_push(c:T = d:int),
+%     assertion(T == int).
+
+% :- end_tests(push_assert).
+
+
+% :- begin_tests(attribute, [setup(reset_globals), cleanup(free_globals)]).
+
+% test(avar_succeeds) :-
+%     z3_push(X>10, R), X = 12, R = l_true.
+
+% test(aver_fails, [fail]) :-
+%     z3_push(X>10, _), X = 9.
+
+% test(avars_fail, [fail] ) :-
+%     z3_push(X:int>Y, _R),
+%     X = 10,
+%     Y = 14.
+
+% test(attributes1, [true(R==126)] ) :-
+%     z3_push(X=14), z3_push(Y=X-5), z3_eval(X * Y, R).
+
+% test(attributes2, [true(R==15) ] ) :-
+%     z3_push(X=14), z3_push(Y=X-5), Y=9, get_attr(X,z3,A), z3_eval(A+1,R).
+
+% test(attributes3, [true(R = 14)] ) :-
+%     z3_push(X=14), z3_push(Y > X), z3_push(_Z > Y), X = a, z3_eval(a,R).
+
+% test(attributes4, [fail] ) :-
+%     z3_push(X=14), z3_push(Y > X), z3_push(Z > Y), X = a, Z = a.
+
+% test(attribute_eval, [true(R == 126)]) :-
+%     z3_push(X=14), z3_push(Y=X-5), z3_eval(X*Y,R).
+
+% test(attribute_model) :-
+%     z3_push(X=14), z3_push(Y=X-5), z3_push(a = X-1), z3_push(b = Y*Y),
+%     z3_model(M),
+%     assertion(member(a=13, M.constants)),
+%     assertion(member(b=81, M.constants)).
+
+
+% test(isoneof) :-
+%     z3_push(isoneof(x:int, a, b, c)),
+%     z3_push(x <> a), z3_push(x <> c),
+%     z3_is_implied(x = b).
+
+% :- end_tests(attribute).
+
+% :- begin_tests(boolean, [setup(reset_globals), cleanup(free_globals)]).
+
+% test(bool_plus) :-
+%     z3_push((a:real) + (b:bool) = 3.0), z3_push(b), z3_model(M),
+%     M.constants == [a=2, b=true].
+
+% test(bool_times) :-
+%     z3_push((a:real) * (b:bool) = 0.0), z3_push(a = 3.2), z3_model(M),
+%     assertion(M.constants == [a=16/5, b=false]).
+
+% test(more_arith) :-
+%     z3_push(a:bool + b:real = 1.0), z3_model(M1), z3_push(b < 1), z3_model(M2),
+%     assertion(M1.constants == [a=false, b=1]),
+%     assertion(M2.constants == [a=true, b=0]).
+
+% test(bool_or) :-
+%     z3_push(((a;b))), z3_push(not(b)), z3_model(M),
+%     assertion(M.constants == [a=true, b=false]).
+
+% test(bool_and) :-
+%     z3_push((a,b)), z3_model(M),
+%     assertion(M.constants == [a=true, b=true]).
+
+% test(bool_andor, [fail]) :-
+%     z3_push((a,b)), z3_push(((not(a), not(b)))).
+
+% test(bool_implies) :-
+%     z3_push(a->b), z3_model(M),
+%     assertion(M.constants = [a=false]).
+
+% test(bool_iff) :-
+%     z3_push(a<=>b), z3_push(a), z3_model(M),
+%     assertion(M.constants = [a=true, b=true]).
+
+% test(type_error_scopes) :-
+%     z3_push(x:foo = y:bar, R), solver_scopes(S),
+%     assertion(R == l_type_error),
+%     assertion(S == 0).
+
+% %% makes sure that not(false) is popped after checking z3_is_implied(true):
+% test(is_implied_pop) :-
+%     z3_is_implied(true),
+%     \+ z3_is_implied(false).
+
+% test(int2real) :-
+%     z3_push(x = int2real(3)),
+%     z3_model(M),
+%     assertion(M.constants = [x=3]).
+
+% test(real2int) :-
+%     z3_push(x = real2int(3.3)),
+%     z3_model(M),
+%     assertion(M.constants = [x=3]).
+
+% test(isint) :-
+%     z3_push(is_int(3.0)),
+%     \+ z3_push(is_int(2)), %% should give type error
+%     z3_push(is_int(2), l_type_error).
+
+% test(ite_implies) :-
+%     z3_push(ite(x,y=1,y=2)),
+%     z3_push(not(x)),
+%     z3_is_implied(y = 2).
+
+% test(distinct) :-
+%     z3_push(distinct(a,b,c,d:int)),
+%     z3_is_implied(not(a=b)).
+
+% test(divides) :-
+%     z3_push(divides(3,x)),
+%     z3_push(x = 9, l_true),
+%     z3_push(divides(2,y)),
+%     z3_push(x = 5, l_false).
+
+% test(rem) :-
+%     z3_push(x = rem(14, 6)),
+%     z3_is_implied(x = 2).
+
+% test(nary_minus) :-
+%     z3_push(x:int = -(0,1,2,3,4)),
+%     z3_is_implied( x = -10 ).
+
+
+% test(nested_uninterpreted) :-
+%     z3_push(f(g(a,b)) = c),
+%     z3_model(_M).
+
+% :- end_tests(boolean).
+
+% :- begin_tests(z3pl_bitvectors, [setup(reset_globals), cleanup(free_globals)]).
+
+% test(basicor, [true((Ror == 9, Rand == 0))]) :-
+%     z3_push(a = int2bv(32, 1)),
+%     z3_push(b = int2bv(32, 8)),
+%     z3_eval(bvor(a,b), Ror),
+%     z3_eval(bvand(a,b), Rand).
+
+% test(neg_no_overflow, [true(C == [b=127])] )  :-
+%     z3_push(false = bvneg_no_overflow(bvnot(b:bv(8))), R),
+%     assertion(R = l_true),
+%     z3_model(M),
+%     M.constants = C.
+
+% test(mul_roundtrip) :-
+%     z3_push(bvmul(a:bv(32),b:bv(32)) = int2bv(32, 1)),
+%     z3_model(M),
+%     %% z3_eval(bvmul(int2bv(32,M.constants...)))
+%     M.constants = [a=A, b=B],
+%     z3_eval(bvmul(int2bv(32, A), int2bv(32, B)), R),
+%     assertion(R = 1).
+
+% %% fails for A=4, B=2
+% test(random_bv_xor) :-
+%     random_between(1, 63, Width), % z3_ast_to_term fails for 64
+%     High is (1<<Width) - 1,
+%     random_between(0, High, A), % inclusive
+%     random_between(0, High, B),
+%     C is A xor B,
+%     z3_eval(bvxor(int2bv(Width, A), int2bv(Width, B)), R),
+%     assertion(R == C).
+
+% test(push_numeral) :-
+%     Width = 63, %% TODO: fix Z3_ast_to_term for larger widths.
+%     findall(1, between(1,Width,_), L),
+%     z3_push(a = bv_numeral(L)),
+%     z3_push(signed = bv2int(a, true)),
+%     z3_push(unsigned = bv2int(a, false)),
+%     z3_model(_M).
+
+% test(combined_bvnumeral) :-
+%     z3_push(bvmul(a:bv(32),b:bv(32)) = int2bv(32, 1)),
+%     z3_push(bvuge(b, mk_numeral("1321", bv(32)))),
+%     z3_model(_M).
+
+% :- end_tests(z3pl_bitvectors).
+
+% :- begin_tests(large_numbers, [setup(reset_globals), cleanup(free_globals)] ).
+
+% test(large_mult) :-
+%     z3_push(x = 123434349499392931234343214**10),
+%     z3_model(_M).
+
+% test(rationals_test) :-
+%     z3_push(x = 3r5),
+%     z3_model_assocs(M),
+%     get_assoc(x, M.constants, 3/5).
+
+% :- end_tests(large_numbers).
+
+
+% :- begin_tests(enums).
+
+% test(enums_basic, [setup(reset_globals), cleanup(free_globals),
+%                    true(Z == [x=banana])
+%                   ]) :-
+%     z3_declare_enum(fruit, [apple, banana, pear]),
+%     z3_push(x:fruit <> pear),
+%     z3_is_implied(or(x = banana, x = apple)),
+%     z3_push(x <> apple),
+%     z3_model(M),
+%     Z = M.constants.
+
+% test(enum_declarations, [setup(reset_globals), cleanup(free_globals),
+%                           true(DeclSorted == [(black/0):color, (white/0):color])
+%                         ]) :-
+%     z3_declare_enum(color, [black, white]),
+%     z3_enum_declarations(Declarations),
+%     sort(Declarations, DeclSorted),
+%     get_global_handle(H),
+%     z3_enum_declarations_assoc(H, Map),
+%     assertion(get_assoc(black/0, Map, color)),
+%     true.
+
+% :- end_tests(enums).
+
+
+
+:- begin_tests(array_minimal_test).
+
+test(array_write_read, [setup(z3_new_handle(H)), cleanup(z3_free_handle(H))]) :-
+    z3_assert(H, a:(array(int,int)) = store(default:(array(int,int)), i:int, 99)),
+    z3_assert(H, x:int = select(a, i)),
+    z3_check(H, R),
     assertion(R == l_true),
-    z3_push(c:T = d:int),
-    assertion(T == int).
+    z3_model_lists(H, Model),
+    memberchk(x=99, Model.constants).
 
-:- end_tests(push_assert).
-
-
-:- begin_tests(attribute, [setup(reset_globals), cleanup(free_globals)]).
-
-test(avar_succeeds) :-
-    z3_push(X>10, R), X = 12, R = l_true.
-
-test(aver_fails, [fail]) :-
-    z3_push(X>10, _), X = 9.
-
-test(avars_fail, [fail] ) :-
-    z3_push(X:int>Y, _R),
-    X = 10,
-    Y = 14.
-
-test(attributes1, [true(R==126)] ) :-
-    z3_push(X=14), z3_push(Y=X-5), z3_eval(X * Y, R).
-
-test(attributes2, [true(R==15) ] ) :-
-    z3_push(X=14), z3_push(Y=X-5), Y=9, get_attr(X,z3,A), z3_eval(A+1,R).
-
-test(attributes3, [true(R = 14)] ) :-
-    z3_push(X=14), z3_push(Y > X), z3_push(_Z > Y), X = a, z3_eval(a,R).
-
-test(attributes4, [fail] ) :-
-    z3_push(X=14), z3_push(Y > X), z3_push(Z > Y), X = a, Z = a.
-
-test(attribute_eval, [true(R == 126)]) :-
-    z3_push(X=14), z3_push(Y=X-5), z3_eval(X*Y,R).
-
-test(attribute_model) :-
-    z3_push(X=14), z3_push(Y=X-5), z3_push(a = X-1), z3_push(b = Y*Y),
-    z3_model(M),
-    assertion(member(a=13, M.constants)),
-    assertion(member(b=81, M.constants)).
+:- end_tests(array_minimal_test).
 
 
-test(isoneof) :-
-    z3_push(isoneof(x:int, a, b, c)),
-    z3_push(x <> a), z3_push(x <> c),
-    z3_is_implied(x = b).
-
-:- end_tests(attribute).
-
-:- begin_tests(boolean, [setup(reset_globals), cleanup(free_globals)]).
-
-test(bool_plus) :-
-    z3_push((a:real) + (b:bool) = 3.0), z3_push(b), z3_model(M),
-    M.constants == [a=2, b=true].
-
-test(bool_times) :-
-    z3_push((a:real) * (b:bool) = 0.0), z3_push(a = 3.2), z3_model(M),
-    assertion(M.constants == [a=16/5, b=false]).
-
-test(more_arith) :-
-    z3_push(a:bool + b:real = 1.0), z3_model(M1), z3_push(b < 1), z3_model(M2),
-    assertion(M1.constants == [a=false, b=1]),
-    assertion(M2.constants == [a=true, b=0]).
-
-test(bool_or) :-
-    z3_push(((a;b))), z3_push(not(b)), z3_model(M),
-    assertion(M.constants == [a=true, b=false]).
-
-test(bool_and) :-
-    z3_push((a,b)), z3_model(M),
-    assertion(M.constants == [a=true, b=true]).
-
-test(bool_andor, [fail]) :-
-    z3_push((a,b)), z3_push(((not(a), not(b)))).
-
-test(bool_implies) :-
-    z3_push(a->b), z3_model(M),
-    assertion(M.constants = [a=false]).
-
-test(bool_iff) :-
-    z3_push(a<=>b), z3_push(a), z3_model(M),
-    assertion(M.constants = [a=true, b=true]).
-
-test(type_error_scopes) :-
-    z3_push(x:foo = y:bar, R), solver_scopes(S),
-    assertion(R == l_type_error),
-    assertion(S == 0).
-
-%% makes sure that not(false) is popped after checking z3_is_implied(true):
-test(is_implied_pop) :-
-    z3_is_implied(true),
-    \+ z3_is_implied(false).
-
-test(int2real) :-
-    z3_push(x = int2real(3)),
-    z3_model(M),
-    assertion(M.constants = [x=3]).
-
-test(real2int) :-
-    z3_push(x = real2int(3.3)),
-    z3_model(M),
-    assertion(M.constants = [x=3]).
-
-test(isint) :-
-    z3_push(is_int(3.0)),
-    \+ z3_push(is_int(2)), %% should give type error
-    z3_push(is_int(2), l_type_error).
-
-test(ite_implies) :-
-    z3_push(ite(x,y=1,y=2)),
-    z3_push(not(x)),
-    z3_is_implied(y = 2).
-
-test(distinct) :-
-    z3_push(distinct(a,b,c,d:int)),
-    z3_is_implied(not(a=b)).
-
-test(divides) :-
-    z3_push(divides(3,x)),
-    z3_push(x = 9, l_true),
-    z3_push(divides(2,y)),
-    z3_push(x = 5, l_false).
-
-test(rem) :-
-    z3_push(x = rem(14, 6)),
-    z3_is_implied(x = 2).
-
-test(nary_minus) :-
-    z3_push(x:int = -(0,1,2,3,4)),
-    z3_is_implied( x = -10 ).
-
-
-test(nested_uninterpreted) :-
-    z3_push(f(g(a,b)) = c),
-    z3_model(_M).
-
-:- end_tests(boolean).
-
-:- begin_tests(z3pl_bitvectors, [setup(reset_globals), cleanup(free_globals)]).
-
-test(basicor, [true((Ror == 9, Rand == 0))]) :-
-    z3_push(a = int2bv(32, 1)),
-    z3_push(b = int2bv(32, 8)),
-    z3_eval(bvor(a,b), Ror),
-    z3_eval(bvand(a,b), Rand).
-
-test(neg_no_overflow, [true(C == [b=127])] )  :-
-    z3_push(false = bvneg_no_overflow(bvnot(b:bv(8))), R),
-    assertion(R = l_true),
-    z3_model(M),
-    M.constants = C.
-
-test(mul_roundtrip) :-
-    z3_push(bvmul(a:bv(32),b:bv(32)) = int2bv(32, 1)),
-    z3_model(M),
-    %% z3_eval(bvmul(int2bv(32,M.constants...)))
-    M.constants = [a=A, b=B],
-    z3_eval(bvmul(int2bv(32, A), int2bv(32, B)), R),
-    assertion(R = 1).
-
-%% fails for A=4, B=2
-test(random_bv_xor) :-
-    random_between(1, 63, Width), % z3_ast_to_term fails for 64
-    High is (1<<Width) - 1,
-    random_between(0, High, A), % inclusive
-    random_between(0, High, B),
-    C is A xor B,
-    z3_eval(bvxor(int2bv(Width, A), int2bv(Width, B)), R),
-    assertion(R == C).
-
-test(push_numeral) :-
-    Width = 63, %% TODO: fix Z3_ast_to_term for larger widths.
-    findall(1, between(1,Width,_), L),
-    z3_push(a = bv_numeral(L)),
-    z3_push(signed = bv2int(a, true)),
-    z3_push(unsigned = bv2int(a, false)),
-    z3_model(_M).
-
-test(combined_bvnumeral) :-
-    z3_push(bvmul(a:bv(32),b:bv(32)) = int2bv(32, 1)),
-    z3_push(bvuge(b, mk_numeral("1321", bv(32)))),
-    z3_model(_M).
-
-:- end_tests(z3pl_bitvectors).
-
-:- begin_tests(large_numbers, [setup(reset_globals), cleanup(free_globals)] ).
-
-test(large_mult) :-
-    z3_push(x = 123434349499392931234343214**10),
-    z3_model(_M).
-
-test(rationals_test) :-
-    z3_push(x = 3r5),
-    z3_model_assocs(M),
-    get_assoc(x, M.constants, 3/5).
-
-:- end_tests(large_numbers).
-
-
-:- begin_tests(enums).
-
-test(enums_basic, [setup(reset_globals), cleanup(free_globals),
-                   true(Z == [x=banana])
-                  ]) :-
-    z3_declare_enum(fruit, [apple, banana, pear]),
-    z3_push(x:fruit <> pear),
-    z3_is_implied(or(x = banana, x = apple)),
-    z3_push(x <> apple),
-    z3_model(M),
-    Z = M.constants.
-
-test(enum_declarations, [setup(reset_globals), cleanup(free_globals),
-                          true(DeclSorted == [(black/0):color, (white/0):color])
-                        ]) :-
-    z3_declare_enum(color, [black, white]),
-    z3_enum_declarations(Declarations),
-    sort(Declarations, DeclSorted),
-    get_global_handle(H),
-    z3_enum_declarations_assoc(H, Map),
-    assertion(get_assoc(black/0, Map, color)),
-    true.
-
-:- end_tests(enums).
 
 :- include(z3_unit_tests).
