@@ -791,6 +791,15 @@ test(array_write_read, [setup(z3_new_handle(H)), cleanup(z3_free_handle(H))]) :-
 
 :- end_tests(array_minimal_test).
 
+:- begin_tests(z3_push_inference, [setup(reset_globals), cleanup(free_globals)]).
+
+test(array_store_select_push_inferred, [true(Model == [y=88])]) :-
+    Expr = select(store(default_array, 5, 88), 5),
+    z3_push(y = Expr),
+    z3_model(M),
+    Model = M.constants.
+
+:- end_tests(z3_push_inference).
 
 
 :- include(z3_unit_tests).

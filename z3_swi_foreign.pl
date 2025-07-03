@@ -596,6 +596,112 @@ test(array_wrong_select, [setup(z3_new_handle(H)), cleanup(z3_free_handle(H))]) 
     z3_assert(H, select(a, 0) = 42),
     z3_check(H, l_false).
 
+% Test that two arrays with shifted values are not equal
+% a[0] = 1, a[1] = 2
+% b[1] = 1, b[2] = 2
+% So a ≠ b
+test(array_shifted_values_inequality, [setup(z3_new_handle(H)), cleanup(z3_free_handle(H))]) :-
+    z3_assert(H, a:(array(int,int)) = store(store(default:(array(int,int)), 0, 1), 1, 2)),
+    z3_assert(H, b:(array(int,int)) = store(store(default:(array(int,int)), 1, 1), 2, 2)),
+    z3_assert(H, a = b),
+    z3_check(H, l_false).
+
+
+
 :- end_tests(array_extended_tests).
 
+
+:- begin_tests(array_nested_tests).
+
+% Test that array of arrays works: outer[5] = inner; inner[1] = 42 → select(select(outer, 5), 1) = 42
+test(array_of_arrays, [setup(z3_new_handle(H)), cleanup(z3_free_handle(H))]) :-
+    % inner: int → int
+    z3_assert(H, inner:(array(int,int)) = store(default_inner:(array(int,int)), 1, 42)),
+
+    % outer: int → array(int → int)
+    z3_assert(H, outer:(array(int, array(int,int))) = store(default_outer:(array(int,array(int,int))), 5, inner)),
+
+    % select(select(outer, 5), 1) = 42
+    z3_assert(H, x:int = select(select(outer, 5), 1)),
+
+    z3_check(H, l_true),
+    z3_model_lists(H, Model),
+    memberchk(x=42, Model.constants).
+
+:- end_tests(array_nested_tests).
+
+
+:- use_module(type_inference).
+:- begin_tests(type_inference_arrays).
+
+% This test ensures that, before select/store are integrated into typecheck/4,
+% calling typecheck on a select expression should fail due to lack of a matching signature or case.
+test(select_inference_works_after_integration) :-
+    empty_assoc(EnvIn),
+    typecheck(select(a, 3), int, EnvIn, EnvOut),
+    get_assoc(a/0, EnvOut, array(int, int)).
+
+
+test(select_inference_works_after_integration) :-
+    empty_assoc(EnvIn),
+    typecheck(select(a, 3), int, EnvIn, EnvOut),
+    get_assoc(a/0, EnvOut, array(int, int)).
+
+
+    test(store_inference_works_after_integration) :-
+    empty_assoc(EnvIn),
+    typecheck(store(a, 3, 99), array(int, int), EnvIn, EnvOut),
+    get_assoc(a/0, EnvOut, array(int, int)).
+
+:- end_tests(type_inference_arrays).
+
+:- begin_tests(typecheck_comparison).
+
+
+
+test(array_select_store, [setup(z3_new_handle(H)), cleanup(z3_free_handle(H))]) :-
+    z3_assert(H, a:(array(int, int)) = store(default:(array(int,int)), x:int, 42)),
+    z3_assert(H, y:int = select(a, x)),
+    z3_check(H, l_true),
+    z3_model_lists(H, Model),
+    memberchk(y=42, Model.constants).
+
+
+:- end_tests(typecheck_comparison).
+
+
+
+:- begin_tests(array_typecheck_minimal).
+:- use_module(type_inference).
+
+test(store_and_select_typecheck_infers_correct_type) :-
+    Expr = select(store(default_array, 7, 99), 7),
+    empty_assoc(EnvIn),
+    typecheck(Expr, int, EnvIn, EnvOut),
+    get_assoc(default_array/0, EnvOut, array(int, int)).
+:- end_tests(array_typecheck_minimal).
+
+
+:- begin_tests(array_typecheck_inference).
+:- use_module(type_inference).
+
+test(array_select_store_typecheck_and_model) :-
+    % Espressione simbolica con store e select
+    Expr = select(store(default_array, 3, 88), 3),
+
+    % % Inferenzia i tipi
+    % empty_assoc(Env0), %creo ambiente vuoto
+    % typecheck(Expr, int, Env0, EnvOut), %deduce che default_array è array int int
+    % get_assoc(default_array/0, EnvOut, array(int, int)), %verifica che abbia dedotto array(int,int)
+
+    % Uso in Z3
+    z3_new_handle(H),
+    z3_assert(H, default_array:(array(int,int)) = default:(array(int,int))), %assegno a default_array array vuoto di tipo array (int,int)
+    z3_assert(H, y:int = Expr), %variabile y = risultato della select select(store(...), 3). ovvero 88
+    z3_check(H, l_true),
+    z3_model_lists(H, Model),
+    memberchk(y=88, Model.constants),
+    z3_free_handle(H).
+
+:- end_tests(array_typecheck_inference).
 

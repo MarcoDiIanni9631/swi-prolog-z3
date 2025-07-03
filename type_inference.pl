@@ -198,7 +198,6 @@ signature(^, A, B) :- signature(power, A, B).
 :- declare(store, [array(Index, Element), Index, Element], array(Index, Element)).
 %%
 
-
 %% the result type depends on the value of an arg, so can't quite do this:
 %% :- declare(int2bv, [int, int], bv(_N)).
 
@@ -278,6 +277,36 @@ typecheck(T, Type, E, E) :- functor(T, bv_numeral, 1),
                             is_list(L),
                             length(L, N),
                             Type = bv(N).
+
+
+% % Handle select(Array, Index)
+% typecheck(select(A, I), ValType, EnvIn, EnvOut) :- !,
+%     % A must be array(IndexType, ValType)
+%     gensym(array, Tmp),
+%     typecheck(A, array(IndexType, ValType), EnvIn, E1),
+%     typecheck(I, IndexType, E1, EnvOut).
+
+% % Handle store(Array, Index, Value)
+% typecheck(store(A, I, V), array(IndexType, ValType), EnvIn, EnvOut) :- !,
+%     typecheck(A, array(IndexType, ValType), EnvIn, E1),
+%     typecheck(I, IndexType, E1, E2),
+%     typecheck(V, ValType, E2, EnvOut).
+
+typecheck(T, ElemType, EIn, EOut) :-
+    functor(T, select, 2), !,
+    T = select(ArrExpr, IndexExpr),
+    typecheck(ArrExpr, array(IndexType, ElemType), EIn, E1),
+    typecheck(IndexExpr, IndexType, E1, EOut).
+
+typecheck(T, array(IndexType, ElemType), EIn, EOut) :-
+    functor(T, store, 3), !,
+    T = store(ArrExpr, IndexExpr, ValueExpr),
+    typecheck(ArrExpr, array(IndexType, ElemType), EIn, E1),
+    typecheck(IndexExpr, IndexType, E1, E2),
+    typecheck(ValueExpr, ElemType, E2, EOut).
+
+
+
 typecheck(X, T, Envin, Envout) :- atomic_mappable(X), !,
                                   (get_assoc(X/0, Envin, T1) ->
                                        T = T1, %% unify_or_error(T, T1), % print error if this fails
