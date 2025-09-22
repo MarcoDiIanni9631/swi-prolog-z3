@@ -107,7 +107,7 @@ type_inference_global_backtrackable does keep a --- backtrackable --- type map.
 free_handle :-
     (nb_current(global_handle, H) ->
          (
-             print_message(informational, z3_message("Freeing old z3.pl handle")),
+           %  print_message(informational, z3_message("Freeing old z3.pl handle")),
              z3_free_handle(H)
          )
     ;
@@ -189,12 +189,15 @@ attr_unify_hook(Attr, Formula) :-
 %% should only be called at the top-most level:
 
 new_global_handle(Handle) :-
-    print_message(informational, z3_message("Making new z3.pl handle")),
+  %  print_message(informational, z3_message("Making new z3.pl handle")),
     free_handle,
     z3_new_handle(Handle),
     nb_setval(global_handle, Handle),
-    nb_setval(solver_depth, 0),
-    print_message(informational, z3_message("Made new z3.pl handle")).
+   % nb_setval(solver_depth, 0),
+    nb_setval(solver_depth, 0).
+
+    % print_message(informational, z3_message("Made new z3.pl handle")).
+
 
 get_global_handle(Handle) :- nb_current(global_handle, Handle).
 

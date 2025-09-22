@@ -196,6 +196,8 @@ signature(^, A, B) :- signature(power, A, B).
 %%array declaration
 :- declare(select, [array(Index, Element), Index], Element).
 :- declare(store, [array(Index, Element), Index, Element], array(Index, Element)).
+:- declare(const_array, [IndexType, ElementType, ElementType],array(IndexType, ElementType)).
+
 %%
 
 %% the result type depends on the value of an arg, so can't quite do this:

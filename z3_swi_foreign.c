@@ -2147,6 +2147,38 @@ else if (strcmp(name_string, "store") == 0) {
   CHECK_ARITY(name_string, 3, arity);
   result = Z3_mk_store(ctx, subterms[0], subterms[1], subterms[2]);
 }
+else if (strcmp(name_string, "const_array") == 0) {
+  CHECK_ARITY(name_string, 3, arity);
+
+  // arg1: sort indice (es. int)
+  term_t t_idx = PL_new_term_ref();
+  PL_get_arg(1, formula, t_idx);
+  Z3_sort idx_sort = mk_sort(h, t_idx);
+  if (!idx_sort) { ERROR("const_array: idx sort null\n"); return NULL; }
+
+  // arg2: sort valore (es. int) — NON lo passiamo a Z3_mk_const_array,
+  // lo usiamo solo per un check facoltativo
+  term_t t_valsort = PL_new_term_ref();
+  PL_get_arg(2, formula, t_valsort);
+  Z3_sort val_sort = mk_sort(h, t_valsort);
+  if (!val_sort) { ERROR("const_array: val sort null\n"); return NULL; }
+
+  // arg3: valore
+  term_t t_value = PL_new_term_ref();
+  PL_get_arg(3, formula, t_value);
+  Z3_ast value_ast = term_to_ast(h, declaration_map, t_value);
+  if (!value_ast) { ERROR("const_array: value ast null\n"); return NULL; }
+
+  // (opzionale) verifica che sort(value) = val_sort
+  if (Z3_get_sort(h->ctx, value_ast) != val_sort) {
+    ERROR("const_array: value sort mismatch\n");
+    return NULL;
+  }
+
+  // *** QUI IL FIX: passiamo il SORT DELL’INDICE, non un sort di array ***
+  result = Z3_mk_const_array(h->ctx, idx_sort, value_ast);
+}
+
 
 
     // ********************************************* bit vectors ************************************/
@@ -2409,10 +2441,10 @@ foreign_t z3_alloc_bytes_foreign(term_t size_term) {
 
 install_t install()
 {
-  fprintf(stderr, "Installing Z3 package\n");
+  //fprintf(stderr, "Installing Z3 package\n");
   
   Z3_string version = Z3_get_full_version();
-  fprintf(stderr, "Using Z3 version %s\n", version);
+ // fprintf(stderr, "Using Z3 version %s\n", version);
 
   // name, arity, function, flags
 
