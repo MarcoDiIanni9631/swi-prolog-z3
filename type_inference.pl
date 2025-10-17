@@ -116,6 +116,12 @@ signature(^, A, B) :- signature(power, A, B).
 :- declare(power, [int, real], real).
 :- declare(power, [real, real], real).
 
+%mod
+:- declare(mod, [int, int], int).
+%abs
+:- declare(abs, [int], int).
+
+
 :- declare(real2int, [real], int).
 :- declare(int2real, [int], real).
 :- declare(is_int, [real], bool).
