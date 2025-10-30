@@ -92,9 +92,17 @@ signature(^, A, B) :- signature(power, A, B).
 % :- declare(+, oneof(real), real).
 % :- declare(*, oneof(real), real).
 
-:- declare(+, all(T), T).
-:- declare(*, all(T), T).
-:- declare(-, all(T), T).
+:- declare(+, all(int), int).
+:- declare(*, all(int), int).
+:- declare(-, all(int), int).
+ 
+:- declare(+, all(real), real).
+:- declare(*, all(real), real).
+:- declare(-, all(real), real).
+ 
+% :- declare(+, all(T), T).
+% :- declare(*, all(T), T).
+% :- declare(-, all(T), T).
 
 :- declare(+, [real, _T], real).
 :- declare(+, [_T, real], real).
