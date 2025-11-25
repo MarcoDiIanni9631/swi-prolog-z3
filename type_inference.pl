@@ -111,6 +111,11 @@ signature(^, A, B) :- signature(power, A, B).
 :- declare(-, [_T, real], real).
 :- declare(-, [real, _T], real).
 
+
+
+
+
+
 :- declare(+, [int, bool], int).
 :- declare(+, [bool, int], int).
 :- declare(+, [bool, bool], int).
@@ -208,10 +213,30 @@ signature(^, A, B) :- signature(power, A, B).
 
 %%
 %%array declaration
-:- declare(select, [array(Index, Element), Index], Element).
-:- declare(store, [array(Index, Element), Index, Element], array(Index, Element)).
+
+%per la select, se Element e ground allora Element, altrimenti prevedere tutti i casi: int, real, bool
+
+:- declare(select, [array(int,bool),int], bool).
+:- declare(select, [array(int,int),int], int).
+:- declare(select, [array(int,real),int], real).
+% :- declare(select, [array(int,array(int,T)),int],array(int,T)).
+% :- declare(select, [array(int,T),int], T).
+% :- declare(select, [array(int,T), int], T).
+
+% :- declare(select, [array(Index, Element), Index], Element).
+
+:- declare(store, [array(int,bool), int, bool], array(int,bool)).
+:- declare(store, [array(int,int),  int, int],  array(int,int)).
+:- declare(store, [array(int,real), int, real], array(int,real)).
+
+% :- declare(store, [array(Index, Element), Index, Element], array(Index, Element)).
 :- declare(const_array, [IndexType, ElementType, ElementType],array(IndexType, ElementType)).
 
+%se è element var -> 
+%se element è nonvar  
+
+
+%:- declare(select, ) _
 %%
 
 %% the result type depends on the value of an arg, so can't quite do this:
@@ -252,6 +277,57 @@ check_length(L, Arity) :- length(L, Arity).
 
 
 %%%%%%%% main predicate: typecheck/4 : +Expression, ~Type, +Environment, -NewEnvironment:
+
+
+
+% typecheck(select(A,I), Type, EIn, EOut) :-
+%     \+ get_assoc(A/0, EIn, array(_, _)),
+%     !,
+%     Type = int,
+%     typecheck(A, array(int,int), EIn, E1),
+%     typecheck(I, int, E1, EOut).
+
+% typecheck(select(A,I), ElemType, EIn, EOut) :-
+%     typecheck(A, array(Index,ElemType), EIn, E1),
+%     typecheck(I, Index, E1, EOut).
+
+
+%     %%prima old
+
+    % typecheck(T, ElemType, EIn, EOut) :-
+    % functor(T, select, 2), !,
+    % T = select(ArrExpr, IndexExpr),
+    % typecheck(ArrExpr, array(IndexType, ElemType), EIn, E1),
+    % typecheck(IndexExpr, IndexType, E1, EOut).
+
+% typecheck(T, array(IndexType, ElemType), EIn, EOut) :-
+%     functor(T, store, 3), !,
+%     T = store(ArrExpr, IndexExpr, ValueExpr),
+%     typecheck(ArrExpr, array(IndexType, ElemType), EIn, E1),
+%     typecheck(IndexExpr, IndexType, E1, E2),
+%     typecheck(ValueExpr, ElemType, E2, EOut).
+
+% % --- SELECT: fallback SOLO se il tipo dell'array non è già noto ---
+% typecheck(select(A,I), ElemType, EIn, EOut) :-
+%     \+ get_assoc(A/0, EIn, array(_, _)),  % Nessun tipo già noto
+%     !,
+%     ElemType = int,
+%     typecheck(A, array(int,int), EIn, E1),
+%     typecheck(I, int, E1, EOut).
+
+% typecheck(store(A,I,V), Type, EIn, EOut) :-
+%     \+ get_assoc(A/0, EIn, array(_, _)),   % A non ha ancora tipo
+%     !,
+%     Type = array(int,int),
+%     typecheck(A, array(int,int), EIn, E1),
+%     typecheck(I, int, E1, E2),
+%     typecheck(V, int, E2, EOut).
+
+% typecheck(store(A,I,V), array(Index,Elem), EIn, EOut) :-
+%     typecheck(A, array(Index,Elem), EIn, E1),
+%     typecheck(I, Index, E1, E2),
+%     typecheck(V, Elem, E2, EOut).
+
 
 %! typecheck(+Expression, -Type, +InputMap, +OutputMap)
 %  Given the types in InputMap, check/infer Type for Expression, and let OutputMap be the resulting type map.
@@ -308,18 +384,7 @@ typecheck(T, Type, E, E) :- functor(T, bv_numeral, 1),
 %     typecheck(I, IndexType, E1, E2),
 %     typecheck(V, ValType, E2, EnvOut).
 
-typecheck(T, ElemType, EIn, EOut) :-
-    functor(T, select, 2), !,
-    T = select(ArrExpr, IndexExpr),
-    typecheck(ArrExpr, array(IndexType, ElemType), EIn, E1),
-    typecheck(IndexExpr, IndexType, E1, EOut).
 
-typecheck(T, array(IndexType, ElemType), EIn, EOut) :-
-    functor(T, store, 3), !,
-    T = store(ArrExpr, IndexExpr, ValueExpr),
-    typecheck(ArrExpr, array(IndexType, ElemType), EIn, E1),
-    typecheck(IndexExpr, IndexType, E1, E2),
-    typecheck(ValueExpr, ElemType, E2, EOut).
 
 
 
