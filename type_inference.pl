@@ -219,7 +219,8 @@ signature(^, A, B) :- signature(power, A, B).
 :- declare(select, [array(int,bool),int], bool).
 :- declare(select, [array(int,int),int], int).
 :- declare(select, [array(int,real),int], real).
-% :- declare(select, [array(int,array(int,T)),int],array(int,T)).
+% :- declare(select, [array(int, array(int,int)), int], array(int,int)).
+:- declare(select, [array(I, E), I], E).
 % :- declare(select, [array(int,T),int], T).
 % :- declare(select, [array(int,T), int], T).
 
