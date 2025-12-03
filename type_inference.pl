@@ -409,9 +409,8 @@ typecheck(select(A,I), ReturnType, Ein, Eout) :-
     typecheck(select(A,I), ReturnType, Ein, Eout) :-
     var(ReturnType),
     !,
-   % ReturnType = NewT,  % variabile fresca
-    isType(NewT),
-    IndexType = int,    % per ora fisso
+    isType(ReturnType),
+    IndexType = int,    
     typecheck(A, array(IndexType, ReturnType), Ein, E1),
     typecheck(I, IndexType, E1, Eout).
 
@@ -450,8 +449,8 @@ typecheck(store(A,I,V), array(Index,Type), Ein, Eout) :-
     var(Type),
     !,
     writeln('store fallback'),
-    isType(Type),         % Type è un tipo valido, ma resta VAR!
-    Index = int,          % per ora gli indici sono interi
+    isType(Type),         
+    Index = int,          
     typecheck(A, array(Index,Type), Ein, E1),
     typecheck(I, Index, E1, E2),
     typecheck(V, Type, E2, Eout).
