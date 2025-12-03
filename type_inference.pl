@@ -216,21 +216,18 @@ signature(^, A, B) :- signature(power, A, B).
 
 %per la select, se Element e ground allora Element, altrimenti prevedere tutti i casi: int, real, bool
 
-:- declare(select, [array(int,bool),int], bool).
-:- declare(select, [array(int,int),int], int).
-:- declare(select, [array(int,real),int], real).
-% :- declare(select, [array(int, array(int,int)), int], array(int,int)).
-:- declare(select, [array(I, E), I], E).
-% :- declare(select, [array(int,T),int], T).
-% :- declare(select, [array(int,T), int], T).
+% :- declare(select, [array(int,bool),int], bool).
+% :- declare(select, [array(int,int),int], int).
+% :- declare(select, [array(int,real),int], real).
 
-% :- declare(select, [array(Index, Element), Index], Element).
 
-:- declare(store, [array(int,bool), int, bool], array(int,bool)).
-:- declare(store, [array(int,int),  int, int],  array(int,int)).
-:- declare(store, [array(int,real), int, real], array(int,real)).
+% :- declare(select, [array(I, E), I], E).
 
-% :- declare(store, [array(Index, Element), Index, Element], array(Index, Element)).
+% :- declare(store, [array(int,bool), int, bool], array(int,bool)). 
+% :- declare(store, [array(int,int),  int, int],  array(int,int)).
+% :- declare(store, [array(int,real), int, real], array(int,real)).
+% :- declare(store, [array(I, E), I, E], array(I, E)).
+
 :- declare(const_array, [IndexType, ElementType, ElementType],array(IndexType, ElementType)).
 
 %se è element var -> 
@@ -330,11 +327,112 @@ check_length(L, Arity) :- length(L, Arity).
 %     typecheck(V, Elem, E2, EOut).
 
 
+
+% % ---- DETECT SELECT WITH KNOWN ARRAY TYPE ----
+% typecheck(select(A,I), Elem, Ein, Eout) :-
+%     get_assoc(A/0, Ein, array(Index,Elem)), !,
+%     typecheck(A, array(Index,Elem), Ein, E1),
+%     typecheck(I, Index, E1, Eout).
+
+% % ---- SELECT with UNKNOWN array type: assegno int a elem e index ----
+% typecheck(select(A,I), Elem, Ein, Eout) :-
+%     !,
+%     Elem = int,
+%     Index = int,
+%     typecheck(A, array(Index,Elem), Ein, E1),
+%     typecheck(I, Index, E1, Eout).
+
+
+
+% % ---- STORE with known type ----
+% typecheck(store(A,I,V), array(Index,Elem), Ein, Eout) :-
+%     get_assoc(A/0, Ein, array(Index,Elem)), !,
+%     typecheck(A, array(Index,Elem), Ein, E1),
+%     typecheck(I, Index, E1, E2),
+%     typecheck(V, Elem, E2, Eout).
+
+% % ---- STORE with unknown type: assegno int e int a index e elem ----
+% typecheck(store(A,I,V), array(Index,Elem), Ein, Eout) :-
+%     !,
+%     Elem = int,
+%     Index = int,
+%     typecheck(A, array(Index,Elem), Ein, E1),
+%     typecheck(I, Index, E1, E2),
+%     typecheck(V, Elem, E2, Eout).
+
+
+
+
+
 %! typecheck(+Expression, -Type, +InputMap, +OutputMap)
 %  Given the types in InputMap, check/infer Type for Expression, and let OutputMap be the resulting type map.
 typecheck(F, _, _, _) :- var(F), !, instantiation_error(F).
+
+
+
+
 typecheck(Term:Type, T, Envin, Envout) :- !, Type = T,
                                           typecheck(Term, Type, Envin, Envout).
+
+% =====================================
+%   ARRAY HANDLING: select / store
+% =====================================
+
+% =====================================
+%   ARRAY HANDLING: select / store
+% =====================================
+
+% --- SELECT con tipo già noto nell'ambiente -----------------------------
+typecheck(select(A,I), ReturnType, Ein, Eout) :-
+    get_assoc(A/0, Ein, array(Index,ReturnType)),
+    !,
+    writeln('select: tipo noto'),
+    writeln(A),
+    writeln(Index),
+    writeln(ReturnType),
+    typecheck(A, array(Index,ReturnType), Ein, E1),
+    typecheck(I, Index, E1, Eout).
+
+% --- SELECT fallback: tipo NON noto default int/int -------------------
+typecheck(select(A,I), ReturnType, Ein, Eout) :-
+    var(ReturnType),
+    !,
+    writeln('select fallback'),
+    ReturnType = int,
+    Index = int,
+    typecheck(A, array(Index,ReturnType), Ein, E1),
+    typecheck(I, Index, E1, Eout).
+
+% =====================================
+%   STORE
+% =====================================
+
+% --- STORE con tipo dell’array già noto ---------------------------------
+typecheck(store(A,I,V), array(Index,Type), Ein, Eout) :-
+    get_assoc(A/0, Ein, array(Index,Type)),
+    !,
+    writeln('store tipo noto'),
+    writeln(A),
+    writeln(Index),
+    writeln(Type),
+    typecheck(A, array(Index,Type), Ein, E1),
+    typecheck(I, Index, E1, E2),
+    typecheck(V, Type, E2, Eout).
+
+% --- STORE fallback: tipo NON noto default int/int --------------------
+typecheck(store(A,I,V), array(Index,Type), Ein, Eout) :-
+    var(Type),
+    !,
+    writeln('store fallback'),
+    Type = int,
+    Index = int,
+    typecheck(A, array(Index,Type), Ein, E1),
+    typecheck(I, Index, E1, E2),
+    typecheck(V, Type, E2, Eout).
+
+
+
+
 typecheck(X, int, E, E) :- integer(X), !.
 typecheck(true, bool, E, E) :- true, !.
 typecheck(false, bool, E, E) :- true, !.
@@ -385,8 +483,9 @@ typecheck(T, Type, E, E) :- functor(T, bv_numeral, 1),
 %     typecheck(I, IndexType, E1, E2),
 %     typecheck(V, ValType, E2, EnvOut).
 
+% z3_push(A,B,B:int=B:int,select(A,B)=C)
 
-
+%select(A,B)
 
 
 typecheck(X, T, Envin, Envout) :- atomic_mappable(X), !,
@@ -398,6 +497,8 @@ typecheck(X, T, Envin, Envout) :- atomic_mappable(X), !,
                                       put_assoc(X/0, Envin, T, Envout)
                                   )
                                   ).
+%select(array(array))
+ %qui siccome c'è compound mappable e abbiamo dichiarato i declare non si attiva, fallisce, passa a quella dopo
 typecheck(X, Type, Envin, Envout) :- compound_mappable(X,Arity), !,
                                      X =.. [F|Subterms],
                                      (get_assoc(F/Arity, Envin, Funtype) ->
