@@ -394,14 +394,26 @@ typecheck(select(A,I), ReturnType, Ein, Eout) :-
     typecheck(I, Index, E1, Eout).
 
 % --- SELECT fallback: tipo NON noto default int/int -------------------
-typecheck(select(A,I), ReturnType, Ein, Eout) :-
+% typecheck(select(A,I), ReturnType, Ein, Eout) :-
+%     var(ReturnType),
+%     !,
+%     writeln('select fallback'),
+%    % ReturnType = int,
+%     ReturnType = _T,
+%     isType(_T),
+%     Index = int,
+%     typecheck(A, array(Index,ReturnType), Ein, E1),
+%     typecheck(I, Index, E1, Eout).
+
+
+    typecheck(select(A,I), ReturnType, Ein, Eout) :-
     var(ReturnType),
     !,
-    writeln('select fallback'),
-    ReturnType = int,
-    Index = int,
-    typecheck(A, array(Index,ReturnType), Ein, E1),
-    typecheck(I, Index, E1, Eout).
+   % ReturnType = NewT,  % variabile fresca
+    isType(NewT),
+    IndexType = int,    % per ora fisso
+    typecheck(A, array(IndexType, ReturnType), Ein, E1),
+    typecheck(I, IndexType, E1, Eout).
 
 % =====================================
 %   STORE
@@ -420,16 +432,29 @@ typecheck(store(A,I,V), array(Index,Type), Ein, Eout) :-
     typecheck(V, Type, E2, Eout).
 
 % --- STORE fallback: tipo NON noto default int/int --------------------
+% typecheck(store(A,I,V), array(Index,Type), Ein, Eout) :-
+%     var(Type),
+%     !,
+%     writeln('store fallback'),
+%   %  Type = int,
+%     Type = _T,
+%     isType(_T),
+%     Index = int,
+%     typecheck(A, array(Index,Type), Ein, E1),
+%     typecheck(I, Index, E1, E2),
+%     typecheck(V, Type, E2, Eout).
+
+
+% --- STORE fallback: tipo NON noto ----------------------------
 typecheck(store(A,I,V), array(Index,Type), Ein, Eout) :-
     var(Type),
     !,
     writeln('store fallback'),
-    Type = int,
-    Index = int,
+    isType(Type),         % Type è un tipo valido, ma resta VAR!
+    Index = int,          % per ora gli indici sono interi
     typecheck(A, array(Index,Type), Ein, E1),
     typecheck(I, Index, E1, E2),
     typecheck(V, Type, E2, Eout).
-
 
 
 
@@ -564,6 +589,11 @@ typecheck_formula_list([], E, E) :- true.
 %  Like typecheck/3 but returns a list instead of an assoc map:
 typecheck_to_list(Term, Type, Result) :- empty_assoc(Empty), typecheck(Term, Type, Empty, Eout), assoc_to_list(Eout, Result).
 
+isType(int).
+isType(real).
+isType(bool).
+isType(array(I,E)) :- I=int, isType(E).
+isType(bv(N)) :- integer(N), N>0.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Unit tests %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
